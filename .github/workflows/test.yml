@@ -1,0 +1,29 @@
+name: SpoilSense Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  streamlit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f tests/requirements.txt ]; then pip install -r tests/requirements.txt; fi
+          sudo apt-get update && sudo apt-get install -y tesseract-ocr
+      - name: Run tests
+        run: |
+          pytest tests/
+      - uses: streamlit/streamlit-app-action@v0.0.3
+        with:
+          app-path: streamlit_app.py
+          skip-smoke: false

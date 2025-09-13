@@ -1,0 +1,13 @@
+{
+  "name": "spoilsense",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "streamlit run streamlit_app.py",
+    "test": "pytest tests/",
+    "test:visual": "python -m seleniumbase tests/test_visual.py",
+    "test:testsprite": "node testsprite_integration.js"
+  },
+  "dependencies": {
+    "@testsprite/testsprite-mcp": "latest"
+  }
+}

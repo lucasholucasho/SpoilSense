@@ -112,4 +112,3 @@ if not expiring:
 else:
     for name, expiry in expiring:
         st.subheader(name)
-        st.write(f"Expiration date: {expiry}")

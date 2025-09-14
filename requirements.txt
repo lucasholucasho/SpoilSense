@@ -1,4 +1,1 @@
 streamlit
-gpt4all
-pillow
-pytesseract

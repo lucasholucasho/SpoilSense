@@ -2,13 +2,13 @@ import streamlit as st
 import json
 import os
 from datetime import datetime, timedelta
-import requests
+from PIL import Image
+import pytesseract
 import re
 
 DATA_FILE = "fridge_items.json"
-OCR_API_KEY = "K86661616188957"
 
-# --- Data handling ---
+# --- Load/save data ---
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
@@ -19,47 +19,41 @@ def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
 
-# --- OCR using OCR.Space ---
+# --- OCR with Tesseract ---
 def extract_expiry_with_ocr(file):
     try:
-        # Prepare file for OCR.Space
-        files = {"file": file.getvalue()}
-        payload = {"apikey": OCR_API_KEY, "language": "eng"}
-
-        response = requests.post("https://api.ocr.space/parse/image", files=files, data=payload)
-        result = response.json()
-        text = result["ParsedResults"][0]["ParsedText"]
-
-        # Match MM/DD/YYYY or MM/DD/YY
+        img = Image.open(file)
+        text = pytesseract.image_to_string(img)
+        # Look for MM/DD/YYYY or MM/DD/YY
         match = re.search(r"(\d{1,2}/\d{1,2}/\d{2,4})", text)
         if match:
-            return datetime.strptime(match.group(1), "%m/%d/%Y").date()
+            try:
+                return datetime.strptime(match.group(1), "%m/%d/%Y").date()
+            except ValueError:
+                return datetime.strptime(match.group(1), "%m/%d/%y").date()
     except Exception as e:
         st.warning(f"OCR failed: {e}")
     return None
 
-# --- Streamlit UI ---
+# --- UI ---
 st.title("🥕 SpoilSense – Reduce Food Waste")
 
-# Camera input
 st.header("➕ Add a new food item")
-camera_file = st.camera_input("Take a picture of your food item")
+camera_file = st.camera_input("Snap your food item")
 
 if camera_file and st.button("Save Item"):
     items = load_data()
     expiry = extract_expiry_with_ocr(camera_file)
-
     product_name = f"item_{len(items)+1}"  # simple auto-name
     items.append({"name": product_name, "expiry": str(expiry)})
     save_data(items)
     st.success(f"Saved {product_name} expiring on {expiry}")
 
-# Show items expiring tomorrow
+# --- Show expiring items ---
 st.header("📅 Items expiring tomorrow")
 items = load_data()
 tomorrow = (datetime.today() + timedelta(days=1)).date()
-
-expiring = [item for item in items if datetime.fromisoformat(item["expiry"]).date() == tomorrow]
+expiring = [item for item in items if item["expiry"] and datetime.fromisoformat(item["expiry"]).date() == tomorrow]
 
 if not expiring:
     st.info("No items expiring tomorrow 🎉")

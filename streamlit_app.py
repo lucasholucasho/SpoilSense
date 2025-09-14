@@ -57,6 +57,7 @@ if camera_file and st.button("Save Item"):
 # --- Show expiring items ---
 st.header("📅 Items expiring tomorrow")
 tomorrow = (datetime.today() + timedelta(days=1)).date()
+st.header(tomorrow)
 
 cur.execute("SELECT name, expiry FROM fridge_items WHERE expiry = %s", (tomorrow,))
 expiring = cur.fetchall()

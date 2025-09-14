@@ -7,11 +7,13 @@ import re
 import io
 import pytz
 
+# --- Database ---
 DB_URL = st.secrets["NEON_DATABASE_URL"]
 
 def get_conn():
     return psycopg2.connect(DB_URL)
 
+# Ensure table exists
 with get_conn() as conn:
     with conn.cursor() as cur:
         cur.execute("""
@@ -23,6 +25,7 @@ with get_conn() as conn:
         """)
         conn.commit()
 
+# --- OCR function ---
 def extract_expiry_with_ocr(file):
     try:
         img = Image.open(file)
@@ -37,25 +40,34 @@ def extract_expiry_with_ocr(file):
         st.warning(f"OCR failed: {e}")
     return None
 
+# --- Streamlit UI ---
 st.title("🥕 SpoilSense – Reduce Food Waste")
 
 st.header("➕ Add a new food item")
+
+# User can type a name
+product_name = st.text_input("Item name", placeholder="e.g., Milk, Tomato Paste")
+
+# Camera input
 camera_file = st.camera_input("Snap your food item")
 
 if camera_file and st.button("Save Item"):
-    file_bytes = io.BytesIO(camera_file.getvalue())
-    expiry = extract_expiry_with_ocr(file_bytes)
-    product_name = f"item_{int(datetime.now().timestamp())}"  # unique auto-name
+    if not product_name:
+        st.warning("Please enter a name for the item.")
+    else:
+        file_bytes = io.BytesIO(camera_file.getvalue())
+        expiry = extract_expiry_with_ocr(file_bytes)
 
-    with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute(
-                "INSERT INTO fridge_items (name, expiry) VALUES (%s, %s)",
-                (product_name, expiry)
-            )
-            conn.commit()
-    st.success(f"Saved {product_name} expiring on {expiry}")
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO fridge_items (name, expiry) VALUES (%s, %s)",
+                    (product_name, expiry)
+                )
+                conn.commit()
+        st.success(f"Saved {product_name} expiring on {expiry}")
 
+# --- Display items expiring tomorrow ---
 st.header("📅 Items expiring tomorrow")
 
 local_tz = pytz.timezone("America/Los_Angeles")

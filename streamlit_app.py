@@ -2,7 +2,6 @@ import streamlit as st
 import json
 import os
 from datetime import datetime, timedelta
-from gpt4all import GPT4All
 from PIL import Image
 import pytesseract
 import re
@@ -29,12 +28,6 @@ def extract_expiry_with_ocr(file):
     except Exception as e:
         st.warning(f"OCR failed: {e}")
     return None
-
-# @st.cache_resource
-# def load_model():
-#     return GPT4All("Meta-Llama-3-8B-Instruct.Q4_0.gguf")
-
-#model = load_model()
 
 st.title("🥕 SpoilSense – Reduce Food Waste")
 
@@ -63,21 +56,3 @@ if not expiring:
 else:
     for item in expiring:
         st.subheader(item["name"])
-        #question = f"Can you eat/drink {item['name']} on its own? Answer Yes or No only."
-
-        # with model.chat_session():
-        #     consumable_resp = model.generate(
-        #         question,
-        #         max_tokens=50
-        #     ).strip().lower()
-
-        # if "yes" in consumable_resp:
-        #     st.success("✅ Consumable on its own")
-        # else:
-        #     with model.chat_session():
-        #         recipe = model.generate(
-        #             f"Suggest a simple, quick recipe using {item['name']} as the main ingredient.",
-        #             max_tokens=350
-        #         )
-        #     st.warning("🍴 Needs a recipe:")
-        #     st.write(recipe)

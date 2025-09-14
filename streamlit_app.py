@@ -6,7 +6,6 @@ import pytesseract
 import re
 import io
 import pytz
-import os
 
 DB_URL = st.secrets["NEON_DATABASE_URL"]
 

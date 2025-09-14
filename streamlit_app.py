@@ -29,7 +29,9 @@ with get_conn() as conn:
 def extract_expiry_with_ocr(file):
     try:
         img = Image.open(file)
-        text = pytesseract.image_to_string(img).upper()  # uppercase for month matching
+        text = pytesseract.image_to_string(img).upper()  # uppercase for consistency
+        st.text("OCR Text Output:")  # optional debugging
+        st.code(text)
 
         # --- Numeric dates: MM/DD/YYYY or MM/DD/YY ---
         numeric_match = re.search(r"(\d{1,2}/\d{1,2}/\d{2,4})", text)
@@ -41,7 +43,7 @@ def extract_expiry_with_ocr(file):
 
         # --- Abbreviated month dates: allow optional prefix like 'BB ' or 'Best by: ' ---
         month_match = re.search(
-            r"(?:\w+\s+|[\w\s]+:?\s*)?"            # optional prefix
+            r"(?:[\w\s]*:?\s*)?"                    # optional prefix, e.g., 'BB ' or 'Best by: '
             r"(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s+"  # month
             r"(\d{1,2})\s+"                        # day
             r"(\d{2,4})",                           # year
@@ -49,7 +51,8 @@ def extract_expiry_with_ocr(file):
         )
         if month_match:
             month_str, day_str, year_str = month_match.groups()
-            month_num = datetime.strptime(month_str, "%b").month
+            # fix: title-case month before parsing with strptime
+            month_num = datetime.strptime(month_str.title(), "%b").month
             day_num = int(day_str)
             year_num = int(year_str)
             # convert 2-digit year to 4-digit (assume 2000+)
